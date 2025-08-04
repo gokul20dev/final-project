@@ -8,13 +8,12 @@ pipeline {
 
     stages {
         stage('Set Branch Name') {
-    steps {
-        script {
-            BRANCH_NAME = sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
-            echo "Detected branch: ${BRANCH_NAME}"
+            steps {
+                script {
+                    echo "Detected branch: ${env.BRANCH_NAME}"
+                }
+            }
         }
-    }
-}
 
         stage('Build Image') {
             steps {
