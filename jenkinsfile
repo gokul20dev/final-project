@@ -8,14 +8,15 @@ pipeline {
 
     stages {
         stage('Get Branch Name') {
-            steps {
-                script {
-                    // Manually get the branch name
-                    env.BRANCH_NAME = sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
-                    echo "Branch pushed: ${env.BRANCH_NAME}"
-                }
-            }
+    steps {
+        script {
+            // This works even in detached HEAD
+            env.BRANCH_NAME = sh(script: "git name-rev --name-only HEAD", returnStdout: true).trim().replaceAll(/^origin\\//, '')
+            echo "Branch pushed: ${env.BRANCH_NAME}"
         }
+    }
+}
+
 
         stage('Build Docker Image') {
             steps {
