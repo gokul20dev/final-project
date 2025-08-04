@@ -10,7 +10,9 @@ pipeline {
         stage('Set Branch Name') {
             steps {
                 script {
-                    echo "Detected branch: ${env.BRANCH_NAME}"
+                    def rawBranch = env.GIT_BRANCH ?: 'unknown'
+                    BRANCH_NAME = rawBranch.tokenize('/').last()
+                    echo "Detected branch: ${BRANCH_NAME}"
                 }
             }
         }
@@ -18,14 +20,14 @@ pipeline {
         stage('Build Image') {
             steps {
                 script {
-                    if (env.BRANCH_NAME == 'dev') {
+                    if (BRANCH_NAME == 'dev') {
                         sh 'chmod +x build.sh'
                         sh "./build.sh $DEV_IMAGE"
-                    } else if (env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master') {
+                    } else if (BRANCH_NAME == 'main' || BRANCH_NAME == 'master') {
                         sh 'chmod +x build.sh'
                         sh "./build.sh $PROD_IMAGE"
                     } else {
-                        error("Unsupported branch: ${env.BRANCH_NAME}")
+                        error("Unsupported branch: ${BRANCH_NAME}")
                     }
                 }
             }
@@ -37,9 +39,9 @@ pipeline {
                     script {
                         sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
 
-                        if (env.BRANCH_NAME == 'dev') {
+                        if (BRANCH_NAME == 'dev') {
                             sh "docker push $DEV_IMAGE"
-                        } else if (env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master') {
+                        } else if (BRANCH_NAME == 'main' || BRANCH_NAME == 'master') {
                             sh "docker push $PROD_IMAGE"
                         }
                     }
