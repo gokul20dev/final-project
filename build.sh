@@ -1,11 +1,23 @@
 #!/bin/bash
+
 set -e
 
-echo "Installing dependencies..."
-npm install
+echo "👉 Installing dependencies..."
+npm install --verbose
 
-echo "Building React app..."
+echo "✅ Dependencies installed."
+
+echo "👉 Building React app..."
 npm run build
 
-echo "Building Docker image: $1"
+echo "✅ React build complete."
+
+echo "👉 Building Docker image..."
 docker build -t $1 .
+
+echo "✅ Docker image built."
+
+echo "👉 Pushing Docker image..."
+docker push $1
+
+echo "✅ Docker image pushed to $1"
