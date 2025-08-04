@@ -1,4 +1,22 @@
 #!/bin/bash
-docker stop devops-react-container 2>/dev/null && docker rm devops-react-container 2>/dev/null
-docker run -d -p 80:80 --name devops-react-container devops-react-app
+
+BRANCH=$1
+if [ "$BRANCH" == "dev" ]; then
+  IMAGE="gokul603/devops-react-dev"
+elif [ "$BRANCH" == "prod" ]; then
+  IMAGE="gokul603/devops-react-prod"
+else
+  echo "❌ Unknown branch"
+  exit 1
+fi
+
+echo "🚀 Deploying image: $IMAGE"
+docker pull $IMAGE
+docker stop react-app || true
+docker rm react-app || true
+docker run -d --name react-app -p 80:80 $IMAGE
+
+
+
+
 

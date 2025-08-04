@@ -1,0 +1,43 @@
+pipeline {
+    agent any
+
+    environment {
+        DEV_IMAGE = "gokul603/devops-react-dev"
+        PROD_IMAGE = "gokul603/devops-react-prod"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+                script {
+                    BRANCH_NAME = env.BRANCH_NAME ?: sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
+                    echo "🔍 Detected branch: ${BRANCH_NAME}"
+                }
+            }
+        }
+
+        stage('Build & Push Image') {
+            steps {
+                script {
+                    if (BRANCH_NAME == 'dev' || BRANCH_NAME == 'origin/dev') {
+                        sh '''
+                            chmod +x build.sh deploy.sh
+                            ./build.sh dev
+                            ./deploy.sh dev
+                        '''
+                    } else if (BRANCH_NAME == 'master' || BRANCH_NAME == 'origin/master') {
+                        sh '''
+                            chmod +x build.sh deploy.sh
+                            ./build.sh prod
+                            ./deploy.sh prod
+                        '''
+                    } else {
+                        echo "⏭️ Skipping: Not dev or master branch."
+                    }
+                }
+            }
+        }
+    }
+}
+
