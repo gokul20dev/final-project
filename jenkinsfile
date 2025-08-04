@@ -5,6 +5,7 @@ pipeline {
     IMAGE_NAME = 'devops-react-app'
     DEV_REPO = 'gokul603/devops-react-dev'
     PROD_REPO = 'gokul603/devops-react-prod'
+    BRANCH_NAME = "${env.GIT_BRANCH ?: 'dev'}"
   }
 
   stages {
