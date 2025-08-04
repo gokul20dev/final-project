@@ -1,0 +1,7 @@
+version: "3.8"
+services:
+  devops-static-app:
+    build: .
+    ports:
+      - "80:80"
+    container_name: devops-static-app
