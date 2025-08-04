@@ -10,7 +10,7 @@ pipeline {
   stages {
     stage('Checkout') {
       steps {
-        git branch: "${env.BRANCH_NAME}", url: 'https://github.com/YOUR_USERNAME/YOUR_REPO.git'
+        git branch: "${env.BRANCH_NAME}", url: 'https://github.com/gokul20dev/final-project.git'
       }
     }
 
