@@ -2,63 +2,51 @@ pipeline {
     agent any
 
     environment {
-        DEV_IMAGE = "gokul603/devops-react-dev"
-        PROD_IMAGE = "gokul603/devops-react-prod"
+        DOCKERHUB_USERNAME = 'gokul603'
+        IMAGE_NAME = ''
     }
 
     stages {
         stage('Set Branch Name') {
             steps {
                 script {
-                    def rawBranch = env.GIT_BRANCH ?: 'unknown'
-                    BRANCH_NAME = rawBranch.tokenize('/').last()
-                    echo "Detected branch: ${BRANCH_NAME}"
+                    def branch = env.GIT_BRANCH ?: env.BRANCH_NAME
+                    echo "Detected branch: ${branch}"
+
+                    if (branch.endsWith('dev')) {
+                        IMAGE_NAME = "${DOCKERHUB_USERNAME}/devops-react-dev"
+                    } else if (branch.endsWith('main') || branch.endsWith('master')) {
+                        IMAGE_NAME = "${DOCKERHUB_USERNAME}/devops-react-prod"
+                    } else {
+                        error "Unsupported branch: ${branch}"
+                    }
                 }
             }
         }
 
         stage('Build Image') {
             steps {
-                script {
-                    if (BRANCH_NAME == 'dev') {
-                        sh 'chmod +x build.sh'
-                        sh "./build.sh $DEV_IMAGE"
-                    } else if (BRANCH_NAME == 'main' || BRANCH_NAME == 'master') {
-                        sh 'chmod +x build.sh'
-                        sh "./build.sh $PROD_IMAGE"
-                    } else {
-                        error("Unsupported branch: ${BRANCH_NAME}")
-                    }
-                }
+                sh 'chmod +x build.sh'
+                sh "./build.sh ${IMAGE_NAME}"
             }
         }
 
         stage('Push to DockerHub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    script {
-                        sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-
-                        if (BRANCH_NAME == 'dev') {
-                            sh "docker push $DEV_IMAGE"
-                        } else if (BRANCH_NAME == 'main' || BRANCH_NAME == 'master') {
-                            sh "docker push $PROD_IMAGE"
-                        }
-                    }
+                    sh """
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${IMAGE_NAME}
+                        docker logout
+                    """
                 }
             }
         }
 
         stage('Deploy App') {
-            when {
-                anyOf {
-                    branch 'main'
-                    branch 'master'
-                }
-            }
             steps {
                 sh 'chmod +x deploy.sh'
-                sh './deploy.sh'
+                sh "./deploy.sh ${IMAGE_NAME}"
             }
         }
     }
