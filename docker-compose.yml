@@ -1,6 +1,8 @@
-version: "3"
+version: '3'
 services:
-  react-app:
+  reactapp:
     image: devops-react-app
+    build:
+      context: .
     ports:
       - "80:80"
