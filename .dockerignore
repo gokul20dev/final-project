@@ -1,8 +1,0 @@
-# .dockerignore
-node_modules
-.git
-Dockerfile
-.dockerignore
-.gitignore
-build.sh
-deploy.sh
