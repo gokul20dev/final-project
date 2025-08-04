@@ -26,10 +26,10 @@ pipeline {
         }
         stage('Build Docker Image') {
             steps {
-                sh '''
+                sh """
                     chmod +x build.sh
                     ./build.sh ${IMAGE_NAME}
-                '''
+                """
             }
         }
         stage('Push Docker Image') {
@@ -45,10 +45,10 @@ pipeline {
         }
         stage('Deploy Application') {
             steps {
-                sh '''
+                sh """
                     chmod +x deploy.sh
                     ./deploy.sh ${IMAGE_NAME}
-                '''
+                """
             }
         }
     }
