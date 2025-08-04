@@ -7,9 +7,13 @@ pipeline {
     }
 
     stages {
-        stage('Branch Info') {
+        stage('Get Branch Name') {
             steps {
-                echo "Branch pushed: ${env.BRANCH_NAME}"
+                script {
+                    // Manually get the branch name
+                    env.BRANCH_NAME = sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+                    echo "Branch pushed: ${env.BRANCH_NAME}"
+                }
             }
         }
 
