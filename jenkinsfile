@@ -7,11 +7,14 @@ pipeline {
     }
 
     stages {
-        stage('Print Branch') {
-            steps {
-                echo "Triggered by branch: ${env.BRANCH_NAME}"
-            }
+        stage('Set Branch Name') {
+    steps {
+        script {
+            BRANCH_NAME = sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+            echo "Detected branch: ${BRANCH_NAME}"
         }
+    }
+}
 
         stage('Build Image') {
             steps {
