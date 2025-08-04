@@ -7,24 +7,21 @@ pipeline {
     }
 
     stages {
-        stage('Get Branch Name') {
-    steps {
-        script {
-            // This works even in detached HEAD
-            env.BRANCH_NAME = sh(script: "git name-rev --name-only HEAD", returnStdout: true).trim().replaceAll(/^origin\\//, '')
-            echo "Branch pushed: ${env.BRANCH_NAME}"
+        stage('Print Branch') {
+            steps {
+                echo "Triggered by branch: ${env.BRANCH_NAME}"
+            }
         }
-    }
-}
 
-
-        stage('Build Docker Image') {
+        stage('Build Image') {
             steps {
                 script {
                     if (env.BRANCH_NAME == 'dev') {
-                        sh "docker build -t $DEV_IMAGE ."
+                        sh 'chmod +x build.sh'
+                        sh "./build.sh $DEV_IMAGE"
                     } else if (env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master') {
-                        sh "docker build -t $PROD_IMAGE ."
+                        sh 'chmod +x build.sh'
+                        sh "./build.sh $PROD_IMAGE"
                     } else {
                         error("Unsupported branch: ${env.BRANCH_NAME}")
                     }
@@ -37,19 +34,27 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     script {
                         sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+
                         if (env.BRANCH_NAME == 'dev') {
-                            sh 'docker push $DEV_IMAGE'
+                            sh "docker push $DEV_IMAGE"
                         } else if (env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master') {
-                            sh 'docker push $PROD_IMAGE'
+                            sh "docker push $PROD_IMAGE"
                         }
                     }
                 }
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy App') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'master'
+                }
+            }
             steps {
-                sh 'bash deploy.sh'
+                sh 'chmod +x deploy.sh'
+                sh './deploy.sh'
             }
         }
     }
