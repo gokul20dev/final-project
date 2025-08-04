@@ -1,43 +1,45 @@
 pipeline {
-    agent any
+  agent any
 
-    environment {
-        DEV_IMAGE = "gokul603/devops-react-dev"
-        PROD_IMAGE = "gokul603/devops-react-prod"
+  environment {
+    IMAGE_NAME = 'devops-react-app'
+    DEV_REPO = 'gokul603/devops-react-dev'
+    PROD_REPO = 'gokul603/devops-react-prod'
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        git branch: "${env.BRANCH_NAME}", url: 'https://github.com/YOUR_USERNAME/YOUR_REPO.git'
+      }
     }
 
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-                script {
-                    BRANCH_NAME = env.BRANCH_NAME ?: sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
-                    echo "🔍 Detected branch: ${BRANCH_NAME}"
-                }
-            }
-        }
-
-        stage('Build & Push Image') {
-            steps {
-                script {
-                    if (BRANCH_NAME == 'dev' || BRANCH_NAME == 'origin/dev') {
-                        sh '''
-                            chmod +x build.sh deploy.sh
-                            ./build.sh dev
-                            ./deploy.sh dev
-                        '''
-                    } else if (BRANCH_NAME == 'master' || BRANCH_NAME == 'origin/master') {
-                        sh '''
-                            chmod +x build.sh deploy.sh
-                            ./build.sh prod
-                            ./deploy.sh prod
-                        '''
-                    } else {
-                        echo "⏭️ Skipping: Not dev or master branch."
-                    }
-                }
-            }
-        }
+    stage('Build Docker Image') {
+      steps {
+        sh './build.sh'
+      }
     }
+
+    stage('Push to DockerHub') {
+      steps {
+        script {
+          docker.withRegistry('', 'dockerhub-credentials-id') {
+            if (env.BRANCH_NAME == 'dev') {
+              sh "docker tag ${IMAGE_NAME} ${DEV_REPO}"
+              sh "docker push ${DEV_REPO}"
+            } else if (env.BRANCH_NAME == 'master') {
+              sh "docker tag ${IMAGE_NAME} ${PROD_REPO}"
+              sh "docker push ${PROD_REPO}"
+            }
+          }
+        }
+      }
+    }
+
+    stage('Deploy') {
+      steps {
+        sh './deploy.sh'
+      }
+    }
+  }
 }
-
